@@ -1,29 +1,28 @@
-"SARS-CoV-2 leverages airway epithelial protective mechanism for viral infection"
+# "SARS-CoV-2 leverages airway epithelial protective mechanism for viral infection"
 
-Original code used to analyze data and generate figures
-for submission to Cell Systems
+# Original code used to analyze data and generate figures
+# for submission to Cell Systems
 
-________________________________________________________________________________________________________________________________________________________
 
 ## login & establish session on cluster
 
-conda create -n velocytomonocle -c conda-forge \
-                        -c bioconda \
-                        -c eugene_t \
-                        r-ggplot2 \
-                        r-seurat \
-                        r-seuratwrappers \
-                        r-velocyto.r \
-                        r-pagoda2 \
-                        bioconductor-monocle \
-                        r-monocle3 \
-                        bioconductor-complexheatmap \
-                        r-viridis \
-                        r-rcolorbrewer \
-                        r-loomR \
-                        r-hdf5r
+# conda create -n velocytomonocle -c conda-forge \
+#                        -c bioconda \
+#                        -c eugene_t \
+#                        r-ggplot2 \
+#                        r-seurat \
+#                        r-seuratwrappers \
+#                        r-velocyto.r \
+#                        r-pagoda2 \
+#                        bioconductor-monocle \
+#                        r-monocle3 \
+#                        bioconductor-complexheatmap \
+#                        r-viridis \
+#                        r-rcolorbrewer \
+#                        r-loomR \
+#                        r-hdf5r
 
-conda activate ##/velocytomonocle
+# conda activate ##/velocytomonocle
 
 ## Enter R
 R
