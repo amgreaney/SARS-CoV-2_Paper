@@ -1,11 +1,7 @@
 # "SARS-CoV-2 leverages airway epithelial protective mechanism for viral infection"
-
 # Original code used to analyze data and generate figures
-# for submission to Cell Systems
-
 
 ## login & establish session on cluster
-
 # conda create -n velocytomonocle -c conda-forge \
 #                        -c bioconda \
 #                        -c eugene_t \
@@ -22,7 +18,7 @@
 #                        r-loomR \
 #                        r-hdf5r
 
-# conda activate ##/velocytomonocle
+# conda activate velocytomonocle
 
 ## Enter R
 R
@@ -77,11 +73,7 @@ hbec.integrated <- IntegrateData(anchorset = hbec.anchors, dims = 1:25)
 DefaultAssay(hbec.integrated) <- "RNA"
 rm(hbec.anchors)
 
-save(hbec.integrated, file = paste("hbec.integrated.prescale",Sys.Date(),".Robj",sep=""))
-load('./hbec.integrated.prescale2020-05-15.Robj')
-
 # Run the standard workflow for visualization and clustering
-ls()
 set.seed(2)
 hbec.integrated <- NormalizeData(hbec.integrated)
 hbec.integrated <- ScaleData(hbec.integrated,vars.to.regress = c('pmito','nCount_RNA'))
@@ -351,22 +343,7 @@ FeaturePlot(hbec.integrated, c('SPRR1B','LYPD3','CLCA2','NOTCH3'), label = T)
 dev.off()
 
 
-
-
 ## Cell identity dot plot
-# gene list from Ravindra preprint
-b.genes <- c('MKI67','TOP2A','KRT5','DAPL1','TP63')  # Basal
-bc.genes <- c('CDK1','KRT4','KRT13')  # BC/Club
-cl.genes <- c('SCGB3A1','SCGB1A1','LYPD2','BPIFB1')  # Club
-g.genes <- c('MUC5AC','MUC5B','GP2')  # Goblet
-c.genes <- c('FOXJ1','CCDC153','CCDC113','MLF1','LZTFL1')  # Ciliated
-t.genes <- c('POU2F3','ASCL2')  # Tuft
-i.genes <- c('FOXI1','CFTR','ASCL3')  # Ionocyte
-p.genes <- c('CHGA','ASCL1')  # PNEC
-
-genes.use <- rev(c(b.genes,bc.genes,cl.genes,g.genes,c.genes,t.genes,i.genes,p.genes))
-
-# OR my gene list
 b.genes <- c('MKI67','TOP2A','KRT5','KRT14','IGFBP6')  # CyclingBasal + Basal
 emt.genes <- c('MMP9','FN1','VIM')  # BasalEMT
 cl.genes <- c('SCGB3A1','SCGB1A1','LYPD2','BPIFB1')  # Club
@@ -378,7 +355,6 @@ p.genes <- c('CHGA','ASCL1','CALCA')  # PNEC
 
 genes.use <- rev(c(b.genes,emt.genes,cl.genes,g.genes,c.genes,t.genes,i.genes,p.genes))
 
-# once you load the appropriate gene list...
 DefaultAssay(hbec.integrated) <- 'RNA'
 hbec.integrated <- ScaleData(hbec.integrated,vars.to.regress = c('pmito','nCount_RNA'),features = genes.use)
 
@@ -406,32 +382,6 @@ dot <- DotPlot(hbec.integrated,features = genes.use,assay='RNA',
 png('hbec.integrated_dot_1.png', width = 1400, height = 1100)
 dot
 dev.off()
-
-# DotPlot from their labels ('ctype')
-Idents(hbec.integrated) <- hbec.integrated[['ctype']]
-Idents(hbec.integrated) <- factor(x=Idents(hbec.integrated), levels = rev(c('Basal cells','BC/Club','Club cells','Goblet cells','Ciliated cells','Tuft cells','Ionocytes','Neuroendocrine cells')))
-
-dot2 <- DotPlot(hbec.integrated,features = genes.use,assay='RNA',
-            cols = group_colors,scale = T,dot.scale = 14) +
-            theme(plot.title = element_text(size=50,color = 'black',hjust = 0.5),
-                    axis.text.x=element_text(size=32, color = 'black',angle=90),
-                    axis.text.y = element_text(size = 42, color = 'black'),
-                    legend.text = element_text(size = 30),
-                    legend.key.size = unit(20, "mm"),
-                    legend.title = element_text(size=30),
-                    strip.text.x = element_text(size=44),
-                    panel.grid.major = element_blank(),
-                    panel.grid.minor = element_blank(),
-                    axis.line = element_line(color = "black"),
-                    axis.title.x = element_blank(),
-                    axis.title.y = element_blank())
-
-png('hbec.integrated_dot_2.png', width = 1500, height = 1100)
-dot2
-dev.off()
-
-
-
 
 
 ## Generating gene lists for GO
@@ -555,7 +505,7 @@ data = table(hbec.integrated$cell_type2,hbec.integrated$Condition)
 prop <- t(t(data)/rowSums(t(data))*100)
 prop <- round(prop,1)
 
-# columns should sum to ~100% bc we are breaking down cell type proportions of each time point
+# columns should sum to 100%
 sum(prop[,1])
 sum(prop[,2])
 sum(prop[,3])
@@ -581,12 +531,11 @@ ggplot(dataplot, aes(fill=cluster,x=sample,y=value)) +
 dev.off()
 
 # Bar graph of high proportions - Basal, Intermediate, Club, Ciliated
-# seuratcolors <- hue_pal()(10) run in R locally
+# seuratcolors <- hue_pal()(10)
 # > seuratcolors
 # [1] "#F8766D" "#D89000" "#A3A500" "#39B600" "#00BF7D" "#00BFC4" "#00B0F6" "#9590FF" "#E76BF3" "#FF62BC"
 seuratcolors <- c('#F8766D','#D89000','#A3A500','#39B600','#00BF7D','#00BFC4','#00B0F6','#9590FF','#E76BF3','#FF62BC')
 
-# Selecting just what we want
 prop_high <- prop[c('Basal','Intermediate','Club','Ciliated'),]
 # > prop_high
 #               Mock 1dpi 2dpi 3dpi
@@ -627,7 +576,6 @@ dev.off()
 
 
 # Bar graph of low proportions - CyclingBasal, BasalEMT, Goblet, Tuft, Ionocytes, PNECs
-# Selecting just what we want
 prop_low <- prop[c('CyclingBasal','BasalEMT','Goblet','Tuft','Ionocytes','PNECs'),]
 # > prop_low
 #               Mock 1dpi 2dpi 3dpi
@@ -812,10 +760,6 @@ VlnPlot(mock,c('PLAU','PLAUR'),ncol = 2, pt.size = 0.2)
 dev.off()
 
 
-
-
-
-
 ## Ciliated cell subclustering
 set.seed(2)
 Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
@@ -860,7 +804,6 @@ png('ciliated_fp_ace2_2.png', width = 1600, height = 400)
 FeaturePlot(ciliated, c('ACE2'),split.by='Condition')
 dev.off()
 
-
 ciliated[['initcluster']] <- Idents(ciliated)
 Idents(ciliated) <- ciliated[['initcluster']]
 ciliated.marks <- FindAllMarkers(ciliated,only.pos = T)
@@ -876,7 +819,7 @@ dev.off()
 ciliated <- subset(ciliated, idents = '16', invert = T)
 # 11 is doublets - remove
 ciliated <- subset(ciliated, idents = '11', invert = T)
-# Will have to re-embed once cell types are identified
+# Re-embed once cell types are identified
 
 png('ciliated_fp_dub.png', width = 800, height = 800)
 FeaturePlot(subset(ciliated,idents = c('14','15')),c('PIFO','AK9','ASCL1','FOXI1'))
@@ -1083,8 +1026,7 @@ save(ciliated, file = paste("ciliated",Sys.Date(),".Robj",sep=""))
 load('./ciliated2020-10-09.Robj')
 
 
-
-### Ciliated sub-population proportions
+## Ciliated sub-population proportions
 seuratcolors <- c('#F8766D','#D89000','#A3A500','#39B600','#00BF7D','#00BFC4','#00B0F6','#9590FF','#E76BF3','#FF62BC')
 
 # ciliated1
@@ -1395,408 +1337,7 @@ ggplot(data_Novel_Infected, aes(fill=cluster_Novel_Infected,x=sample_short,y=val
 dev.off()
 
 
-
-
-
-## Basal cell subclustering
-set.seed(2)
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-basal <- subset(hbec.integrated, idents = c('Basal','CyclingBasal','BasalEMT'))
-DefaultAssay(basal) <- 'RNA'
-basal <- NormalizeData(basal)
-DefaultAssay(basal) <- 'integrated'
-
-basal <- FindVariableFeatures(basal)
-basal <- ScaleData(basal,vars.to.regress = c('pmito','nCount_RNA'))
-basal <- RunPCA(basal, npcs = 30, verbose = FALSE)
-
-basal <- RunUMAP(basal, reduction = "pca", dims = 1:20)
-basal <- FindNeighbors(basal,k.param=10,dims = 1:20)
-basal <- FindClusters(basal,resolution = 0.5)
-DefaultAssay(basal) <- 'RNA'
-basal[['initcluster']] <- Idents(basal)
-png('basal_umap_1.png',width = 800,height = 800)
-UMAPPlot(basal,label = T)
-dev.off()
-
-png('basal_umap_2.png', width = 800, height = 800)
-UMAPPlot(basal,label = F, group.by = 'Condition')
-dev.off()
-
-png('basal_umap_3.png', width = 800, height = 800)
-UMAPPlot(basal,group.by='Condition',split.by='Condition',ncol=2)
-dev.off()
-
-png('basal_umap_4.png', width = 800, height = 800)
-UMAPPlot(basal,label = F, group.by = 'cell_type2')
-dev.off()
-
-png('basal_umap_5.png', width = 800, height = 800)
-UMAPPlot(basal,label = F, group.by = 'ctype')
-dev.off()
-
-png('basal_fp_1.png', width = 800, height = 800)
-FeaturePlot(basal, c('KRT5','KRT14','MKI67','FN1'), label = T)
-dev.off()
-
-png('basal_fp_2.png', width = 800, height = 800)
-FeaturePlot(basal, c('PIFO','POU2F3','FOXI1','ASCL1'), label = T)
-dev.off()
-
-# 13, 14 are doublets, 10 is low-info - REMOVE
-basal <- subset(basal, idents = c('10','13','14'), invert = T)
-
-Idents(basal) <- basal[['initcluster']]
-basal.marks <- FindAllMarkers(basal,only.pos = T)
-basal.marks$ratio <- basal.marks$pct.1/basal.marks$pct.2
-save(basal.marks,file = paste("basal.marks",Sys.Date(),".Robj",sep=""))
-write.table(basal.marks,file = paste("basal.marks",Sys.Date(),".txt",sep=""),sep="\t")
-
-# QC
-png('basal_vln_1.png', width = 800, height = 400)
-VlnPlot(basal, c('nFeature_RNA','nCount_RNA'), pt.size = 0)
-dev.off()
-
-# Marker exploration
-png('basal_fp_sec.png', width = 800, height = 800)
-FeaturePlot(basal, c('SCGB1A1','SCGB3A1','MUC1','LYPD2'))
-dev.off()
-
-png('basal_fp_sec9.png', width = 800, height = 800)
-FeaturePlot(subset(basal,idents = 'Pre_Secretory'), c('SCGB1A1','SCGB3A1','MUC1','LYPD2'))
-dev.off()
-
-png('basal_fp_emt.png', width = 800, height = 800)
-FeaturePlot(basal, c('FN1','MMP9','TAGLN','COL1A1'))  # BasalEMT
-dev.off()
-
-png('basal_fp_cyc.png', width = 800, height = 800)
-FeaturePlot(basal, c('MKI67','TOP2A','PCNA','TUBA1B'))  # CyclingBasal
-dev.off()
-
-# cluster 11? ciliated, remove
-png('basal_fp_c11.png', width = 800, height = 800)
-FeaturePlot(basal, c('DNAH12','DNAAF1','CFAP70','DNAH11'))  # cluster 11
-dev.off()
-basal <- subset(basal, idents = c('11'), invert = T)
-
-# cluster 8? novel infected?
-png('basal_umap_c8.png', width = 800, height = 800)
-UMAPPlot(subset(basal,idents = '8'),group.by='Condition',split.by='Condition',ncol=2)
-dev.off()
-
-png('basal_fp_c8.png', width = 800, height = 800)
-FeaturePlot(basal, c('ISG15','IFI6','IFITM3','CXCL14'))  # cluster 8
-dev.off()
-
-# cluster 5? 0? 3? 4? 5+0+3 are not distinct and may represent one end of an archetype, 4 is somewhat distinct
-png('basal_fp_c5.png', width = 800, height = 800)
-FeaturePlot(basal, c('ELN','DLL1','DLK2','NGFR'))  # cluster 5
-dev.off()
-png('basal_fp_c0.png', width = 800, height = 800)
-FeaturePlot(basal, c('EDN2','NDUFA4L2','CA2','CYP26A1'))  # cluster 0
-dev.off()
-png('basal_fp_c3.png', width = 800, height = 800)
-FeaturePlot(basal, c('DLL1','IGFBP2','WNT10A','MT2A'))  # cluster 3
-dev.off()
-png('basal_fp_c4.png', width = 800, height = 800)
-FeaturePlot(basal, c('PDGFB','MMP2','GATA3','TNC'))  # cluster 4
-dev.off()
-
-# cluster 1 + 2?
-png('basal_fp_c2.png', width = 800, height = 800)
-FeaturePlot(basal, c('CLCA4','RHCG','IVL','CEACAM1'))  # cluster 2
-dev.off()
-png('basal_fp_plau.png', width = 800, height = 800)
-FeaturePlot(basal, c('PLAU','PLAUR','SERPINE1'))  # plau
-dev.off()
-png('basal_fp_plaur.png', width = 1600, height = 400)
-FeaturePlot(basal, c('PLAUR'),split.by='Condition')  # plaur over time
-dev.off()
-png('basal_fp_plau2.png', width = 1600, height = 400)
-FeaturePlot(basal, c('PLAU'),split.by='Condition')  # plaur over time
-dev.off()
-png('basal_fp_c1.png', width = 800, height = 800)
-FeaturePlot(basal, c('DCLK1','LY6D','SERPINB4','NOTCH3'))  # cluster 1
-dev.off()
-
-Idents(basal) <- basal[['initcluster']]
-basal <- RenameIdents(basal,
-                      '0'='EDN2+',
-                      '1'='LY6D+',
-                      '2'='CEACAM1+',
-                      '3'='WNT10A+',
-                      '4'='TNC+',
-                      '5'='ELN+',
-                      '6'='CyclingBasal',
-                      '7'='CyclingBasal',
-                      '8'='Novel_Infected',
-                      '9'='Pre_Secretory',
-                      '12'='BasalEMT')
-basal[['basal1']] <- Idents(basal)
-
-png('basal_umap_6.png', width = 800, height = 800)
-UMAPPlot(basal,label = T, group.by = 'basal1')
-dev.off()
-
-png('basal_umap_7.png', width = 800, height = 800)
-UMAPPlot(basal,group.by='basal1',split.by='Condition',ncol=2)
-dev.off()
-
-png('basal_vln_ace2.png', width = 800,height=400)
-VlnPlot(basal,c('ACE2','TMPRSS2'),ncol=2,pt.size = 0.2)
-dev.off()
-
-
-basal.marks <- FindAllMarkers(basal,only.pos = T)
-basal.marks$ratio <- basal.marks$pct.1/basal.marks$pct.2
-save(basal.marks,file = paste("basal.marks",Sys.Date(),".Robj",sep=""))
-write.table(basal.marks,file = paste("basal.marks",Sys.Date(),".txt",sep=""),sep="\t")
-
-save(basal, file = paste("basal",Sys.Date(),".Robj",sep=""))
-load('./basal2020-06-26.Robj')
-
-
-### Basal sub-population proportions
-seuratcolors <- c('#F8766D','#D89000','#A3A500','#39B600','#00BF7D','#00BFC4','#00B0F6','#9590FF','#E76BF3','#FF62BC')
-
-# basal1
-Idents(basal) <- basal[['basal1']]
-basal$Condition <- factor(basal$Condition,levels=c('Mock','1dpi','2dpi','3dpi'))
-basal$basal1 <- factor(basal$basal1,levels=c('EDN2+','LY6D+','CEACAM1+','WNT10A+','TNC+','ELN+','CyclingBasal','Novel_Infected','Pre_Secretory','BasalEMT'))
-data = table(basal$basal1,basal$Condition)
-
-prop <- t(t(data)/rowSums(t(data))*100)
-prop <- round(prop,1)
-
-# Organizing data for the bar graph
-sample <- c(rep('Mock',10),rep('1dpi',10),rep('2dpi',10),rep('3dpi',10))
-cluster <- rep(c('EDN2+','LY6D+','CEACAM1+','WNT10A+','TNC+','ELN+','CyclingBasal','Novel_Infected','Pre_Secretory','BasalEMT'),4)
-value <- as.vector(as.matrix(prop))
-dataplot <- data.frame(sample,cluster,value)
-
-# Set the order of your data
-dataplot$sample <- factor(dataplot$sample,levels=c('Mock','1dpi','2dpi','3dpi'))
-dataplot$cluster <- factor(dataplot$cluster,levels=c('EDN2+','LY6D+','CEACAM1+','WNT10A+','TNC+','ELN+','CyclingBasal','Novel_Infected','Pre_Secretory','BasalEMT'))
-
-# Run/save the ggplot bar graph
-png('basal_bar_1.png', width = 1200,height=700)
-ggplot(dataplot, aes(fill=cluster,x=sample,y=value)) +
-  geom_bar(position="dodge", stat="identity", show.legend = T) + xlab('') + ylab('% of Cell Type per Time Point') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42),
-        legend.title = element_text(size = 0),
-        legend.text = element_text(size = 20),
-        legend.key.size = unit(3, "lines"))
-dev.off()
-
-# just EDN2+
-prop_EDN2 <- prop['EDN2+',]
-value <- as.vector(as.matrix(prop_EDN2))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_EDN2 <- rep(c('EDN2+'),4)
-data_EDN2 <- data.frame(sample_short,cluster_EDN2,value)
-
-data_EDN2$sample_short <- factor(data_EDN2$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_EDN2.png', width = 500,height=700)
-ggplot(data_EDN2, aes(fill=cluster_EDN2,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[1], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just LY6D+
-prop_LY6D <- prop['LY6D+',]
-value <- as.vector(as.matrix(prop_LY6D))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_LY6D <- rep(c('LY6D+'),4)
-data_LY6D <- data.frame(sample_short,cluster_LY6D,value)
-
-data_LY6D$sample_short <- factor(data_LY6D$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_LY6D.png', width = 500,height=700)
-ggplot(data_LY6D, aes(fill=cluster_LY6D,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[2], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just CEACAM1+
-prop_CEACAM1 <- prop['CEACAM1+',]
-value <- as.vector(as.matrix(prop_CEACAM1))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_CEACAM1 <- rep(c('CEACAM1+'),4)
-data_CEACAM1 <- data.frame(sample_short,cluster_CEACAM1,value)
-
-data_CEACAM1$sample_short <- factor(data_CEACAM1$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_CEACAM1.png', width = 500,height=700)
-ggplot(data_CEACAM1, aes(fill=cluster_CEACAM1,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[3], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just WNT10A+
-prop_WNT10A <- prop['WNT10A+',]
-value <- as.vector(as.matrix(prop_WNT10A))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_WNT10A <- rep(c('WNT10A+'),4)
-data_WNT10A <- data.frame(sample_short,cluster_WNT10A,value)
-
-data_WNT10A$sample_short <- factor(data_WNT10A$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_WNT10A.png', width = 500,height=700)
-ggplot(data_WNT10A, aes(fill=cluster_WNT10A,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[4], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just TNC+
-prop_TNC <- prop['TNC+',]
-value <- as.vector(as.matrix(prop_TNC))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_TNC <- rep(c('TNC+'),4)
-data_TNC <- data.frame(sample_short,cluster_TNC,value)
-
-data_TNC$sample_short <- factor(data_TNC$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_TNC.png', width = 500,height=700)
-ggplot(data_TNC, aes(fill=cluster_TNC,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[5], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just ELN+
-prop_ELN <- prop['ELN+',]
-value <- as.vector(as.matrix(prop_ELN))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_ELN <- rep(c('ELN+'),4)
-data_ELN <- data.frame(sample_short,cluster_ELN,value)
-
-data_ELN$sample_short <- factor(data_ELN$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_ELN.png', width = 500,height=700)
-ggplot(data_ELN, aes(fill=cluster_ELN,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[6], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just CyclingBasal
-prop_CyclingBasal <- prop['CyclingBasal',]
-value <- as.vector(as.matrix(prop_CyclingBasal))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_CyclingBasal <- rep(c('CyclingBasal'),4)
-data_CyclingBasal <- data.frame(sample_short,cluster_CyclingBasal,value)
-
-data_CyclingBasal$sample_short <- factor(data_CyclingBasal$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_CyclingBasal.png', width = 500,height=700)
-ggplot(data_CyclingBasal, aes(fill=cluster_CyclingBasal,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[7], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just Novel_Infected
-prop_Novel_Infected <- prop['Novel_Infected',]
-value <- as.vector(as.matrix(prop_Novel_Infected))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_Novel_Infected <- rep(c('Novel_Infected'),4)
-data_Novel_Infected <- data.frame(sample_short,cluster_Novel_Infected,value)
-
-data_Novel_Infected$sample_short <- factor(data_Novel_Infected$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_Novel_Infected.png', width = 500,height=700)
-ggplot(data_Novel_Infected, aes(fill=cluster_Novel_Infected,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[8], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just Pre_Secretory
-prop_Pre_Secretory <- prop['Pre_Secretory',]
-value <- as.vector(as.matrix(prop_Pre_Secretory))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_Pre_Secretory <- rep(c('Pre_Secretory'),4)
-data_Pre_Secretory <- data.frame(sample_short,cluster_Pre_Secretory,value)
-
-data_Pre_Secretory$sample_short <- factor(data_Pre_Secretory$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_Pre_Secretory.png', width = 500,height=700)
-ggplot(data_Pre_Secretory, aes(fill=cluster_Pre_Secretory,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[9], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# just BasalEMT
-prop_BasalEMT <- prop['BasalEMT',]
-value <- as.vector(as.matrix(prop_BasalEMT))
-sample_short <- c('Mock','1dpi','2dpi','3dpi')
-cluster_BasalEMT <- rep(c('BasalEMT'),4)
-data_BasalEMT <- data.frame(sample_short,cluster_BasalEMT,value)
-
-data_BasalEMT$sample_short <- factor(data_BasalEMT$sample_short, levels = c('Mock','1dpi','2dpi','3dpi'))
-
-png('basal_bar_BasalEMT.png', width = 500,height=700)
-ggplot(data_BasalEMT, aes(fill=cluster_BasalEMT,x=sample_short,y=value)) +
-  geom_bar(position="dodge", stat="identity", fill = seuratcolors[10], show.legend = F) + xlab('') + ylab('Percent of Total Basal') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42))
-dev.off()
-
-# basal2
-Idents(basal) <- basal[['basal2']]
-basal$Condition <- factor(basal$Condition,levels=c('Mock','1dpi','2dpi','3dpi'))
-basal$basal2 <- factor(basal$basal2,levels=c('Immune_Responsive','Progenitor','Mature_Functional','Novel_Infected'))
-data = table(basal$basal2,basal$Condition)
-
-prop <- t(t(data)/rowSums(t(data))*100)
-prop <- round(prop,1)
-
-# Organizing data for the bar graph
-sample <- c(rep('Mock',4),rep('1dpi',4),rep('2dpi',4),rep('3dpi',4))
-cluster <- rep(c('Immune_Responsive','Progenitor','Mature_Functional','Novel_Infected'),4)
-value <- as.vector(as.matrix(prop))
-dataplot <- data.frame(sample,cluster,value)
-
-# Set the order of your data
-dataplot$sample <- factor(dataplot$sample,levels=c('Mock','1dpi','2dpi','3dpi'))
-dataplot$cluster <- factor(dataplot$cluster,levels=c('Immune_Responsive','Progenitor','Mature_Functional','Novel_Infected'))
-
-# Run/save the ggplot bar graph
-png('basal_bar_2.png', width = 1200,height=700)
-ggplot(dataplot, aes(fill=cluster,x=sample,y=value)) +
-  geom_bar(position="dodge", stat="identity", show.legend = T) + xlab('') + ylab('% of Cell Type per Time Point') +
-  theme(axis.text.x=element_text(size=35),
-        axis.text.y = element_text(size = 35),
-        axis.title.y = element_text(size = 42),
-        legend.title = element_text(size = 0),
-        legend.text = element_text(size = 20),
-        legend.key.size = unit(3, "lines"))
-dev.off()
-
-
-
-
-
-#### Observing Viral Infection ####
+## Observing Viral Infection
 Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
 
 png('hbec.integrated_fp_virus1.png', width = 800, height = 800)
@@ -1822,7 +1363,6 @@ FeaturePlot(hbec.integrated,'ACE2',label = F,label.size=8,repel=T) + labs(title 
             theme(legend.text = element_text(size = 22),
             legend.key.size = unit(1.5, "lines"))
 dev.off()
-
 
 legend(3,30,legend = c('-','+'),col=c("lightgrey","#00ff00"),title = 'Infection',cex=1,plot=FALSE)
 
@@ -1899,7 +1439,6 @@ ggplot(dataplot, aes(fill=cluster,x=sample,y=value)) +
         legend.text = element_text(size = 20),
         legend.key.size = unit(3, "lines"))
 dev.off()
-
 
 # just CyclingBasal
 data_CyclingBasal <- prop['CyclingBasal',]
@@ -2160,9 +1699,6 @@ p1
 dev.off()
 
 
-
-
-
 ## Ciliated Subpopulation Infection # FIGURE PLOT
 ciliated$scv2 <- ciliated$'scv2+'
 infected <- subset(ciliated, subset = scv2 > 0.5)
@@ -2294,8 +1830,6 @@ p1
 dev.off()
 
 
-
-
 ### Ciliated Infection Pie Chart # FIGURE PLOT
 Idents(infected) <- infected$Condition2
 inf1 <- subset(infected,idents = '1')
@@ -2355,8 +1889,6 @@ p1
 dev.off()
 
 
-
-
 #### Infection in Ciliated object
 Idents(ciliated) <- ciliated[['ciliated1']]
 
@@ -2405,32 +1937,9 @@ FeaturePlot(bigcil, c('scv2+'), split.by = 'Condition',label = F) +
 dev.off()
 
 
-
-#### Infection in Basal object
-Idents(basal) <- basal[['basal1']]
-
-png('basal_fp_virus1.png', width = 800, height = 800)
-FeaturePlot(basal, c('scv2+','scv2.5+','scv2.10+','scv2-orf1-10'), label = T)
-dev.off()
-
-png('basal_fp_virus2.png', width = 800, height = 800)
-FeaturePlot(basal, c('scv2+'), label = T)
-dev.off()
-
-png('basal_fp_virus3.png', width = 1600, height = 400)
-FeaturePlot(basal, c('scv2+'), split.by = 'Condition',label = T)
-dev.off()
-
-png('basal_vln_virus1.png', width = 800,height=400)
-VlnPlot(basal,c('scv2-orf1-10'),pt.size = 0.2,group.by='basal1') + xlab('') + theme(legend.position = 'none')
-dev.off()
-
-
-
-#### Adding Ciliated & Basal subclustering metadata back to hbec.integrated object ####
+#### Adding Ciliated subclustering metadata back to hbec.integrated object ####
 hbec.integrated <- AddMetaData(hbec.integrated, metadata = ciliated$ciliated1, col.name = 'ciliated1')
 hbec.integrated <- AddMetaData(hbec.integrated, metadata = ciliated$ciliated2, col.name = 'ciliated2')
-hbec.integrated <- AddMetaData(hbec.integrated, metadata = basal$basal1, col.name = 'basal1')
 hbec.integrated <- AddMetaData(hbec.integrated, metadata = ciliated$ciliated3, col.name = 'ciliated3')
 
 # Unified sub-clustering
@@ -2460,9 +1969,6 @@ hbec.integrated[['cell_type3']] <- Idents(hbec.integrated)
 Idents(hbec.integrated) <- hbec.integrated[['cell_type4']]
 hbec.integrated <- RenameIdents(hbec.integrated,'Ciliated'='Remove')
 hbec.integrated[['cell_type4']] <- Idents(hbec.integrated)
-
-
-
 
 
 #### Exploring Ciliated Cells - 7/17/20 ####
@@ -2530,10 +2036,6 @@ dot
 dev.off()
 
 
-
-
-
-
 #### Overall cell identity heat map #### FIGURE PLOT
 b.genes <- c('MKI67','TOP2A','KRT5','KRT14','IGFBP6')  # CyclingBasal + Basal
 emt.genes <- c('MMP9','FN1','VIM')  # BasalEMT
@@ -2591,15 +2093,13 @@ draw(hbec.integrated.heatmap,padding = unit(c(2, 2, 4, 2), "mm"))
 dev.off()
 
 
-
-
 #### Ciliated Subtype identity heat map #### FIGURE PLOT
 load('./ciliated2020-10-09.Robj')
 
 ir.genes <- c('SAA1','HLA-DRB5','PRDX5','PLA2G10')  # Immune Responsive
 p.genes <- c('KRT5','KRT14','SCGB1A1','SCGB3A1')  # Progenitor
 mf.genes <- c('CFAP70','DNAAF1','DLEC1','DNAH12')  # Mature Functional
-ni.genes <- c('IFIT2','NFKBIA','CXCL2')  # Novel Infected - how to include scv2-orf1-10 ?
+ni.genes <- c('IFIT2','NFKBIA','CXCL2')  # Novel Infected
 entry.genes <- c('HMGB1','NRP1','CTSL','ACE2','TMPRSS2','BSG','FURIN',"ITGB1","SERPINB3","CD81","CAV2","CAV1","RPSA","CLDN1","PPIA","EPHA2","NECTIN1","CTSB")
 ifn.genes2 <- unique(c("CYLD","IRF1","AF117829","PLCG2","REL","TNFAIP3","ZC3HAV1","TICAM1","NFKB1","NFKB2","RELB"))
 
@@ -2653,7 +2153,6 @@ png('ciliated_heatmap_entry2.png', width = 250, height = 500)
 draw(ciliated.heatmap,padding = unit(c(2, 2, 4, 2), "mm"))
 dev.off()
 
-
 myplots <- vector('list', length(entry.genes))
 for (i in 1:length(entry.genes)) {
     message(i)
@@ -2669,9 +2168,6 @@ for (i in 1:length(entry.genes)) {
     plot(myplots[[i]])
     dev.off()
 }
-
-
-
 
 
 ### Making GO bar plot # FIGURE PLOT
@@ -2731,8 +2227,6 @@ ggplot(allgo,aes(x=neglog10pval,y=Sample,fill=Sample)) +
 dev.off()
 
 
-
-
 # Ciliated Subtype GO - FIGURE PLOT
 cilgo <- data.frame(read.delim('./ciliatedGO2.txt'))
 cilgo$Sample <- factor(cilgo$Sample, levels = rev(c('MC1','CP','MC2','NIC')))
@@ -2767,18 +2261,12 @@ ggplot(cilgo,aes(x=neglogpval,y=Sample,fill=Sample)) +
 dev.off()
 
 
-
-
-
-
-
 #### Gene variance over time
 ### Ciliated cells
 load('./ciliated2020-10-09.Robj')
 load('./hbec.ciliated.marks22020-06-02.Robj')
 genes.use <- hbec.ciliated.marks %>% group_by(cluster) %>% top_n(40, avg_logFC)
-## Sam's marker list's
-# Get genes which have met our statistical thresholds (v1)
+# Genes which have met our statistical thresholds (v1)
 # V2
 toMatch <- c('VEGF','PDGF','HBEGF','CSF','BMP','ANGPT','IL6','EGF','FGF','HGF','TNF','TGF',
             'CSF','CCL2','IL8','IL6','RETN','VWF','SERPINE1','THBD','SELP','ANGPT2','C1Q','PLAU','DLL','REG')
@@ -2845,82 +2333,6 @@ ciliated.heatmap <- Heatmap(as.matrix(ciliated.avg),
 
 png('ciliated_timehm_3.png', width = 250, height = 1700)
 draw(ciliated.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
-dev.off()
-
-
-### Basal cells
-load('./basal2020-06-26.Robj')
-load('./hbec.basal.marks2020-06-02.Robj')
-genes.use <- hbec.basal.marks %>% group_by(cluster) %>% top_n(40, avg_logFC)
-## Sam's marker list's
-# Get genes which have met our statistical thresholds (v1)
-# V2
-toMatch <- c('VEGF','PDGF','HBEGF','CSF','BMP','ANGPT','IL6','EGF','FGF','HGF','TNF','TGF',
-            'CSF','CCL2','IL8','IL6','RETN','VWF','SERPINE1','THBD','SELP','ANGPT2','C1Q','PLAU','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(basal), value=TRUE))
-matches.exclude <- matches[grep('R',matches)]
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# V3
-toMatch <- c('VEGF','PDGF','HBEGF','CYR','BMP','ANGPT','EGF','FGF','HGF','TGF','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(basal), value=TRUE))
-matches.exclude <- NULL
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# Yap downstream
-genes.use <- unique(c('YAP1','AREG','FGF1','CTGF',
-                    'SMAD7','AXIN2','SERPINE1','ITGB2','GLI1','BBC3',
-                    'AFP','ID1','ID2','NKD1','MYC','CCND1',
-                    'SOX2','SNAI2','BIRC2','BIRC5'))
-
-DefaultAssay(basal) <- 'RNA'
-Idents(basal) <- basal[['Condition']]
-basal$Condition <- factor(x=basal$Condition,
-                             levels = c('Mock','1dpi','2dpi','3dpi'))
-basal <- basal[order(basal$Condition),]
-identities <- c('Mock','1dpi','2dpi','3dpi')
-
-# prepare data
-basal <- ScaleData(basal,features = genes.use)  # $gene
-basal.avg <- AverageExpression(basal,assays = 'RNA',slot='scale.data')  # ,features=genes.use
-basal.avg <- t(scale(t(basal.avg$RNA)))
-unityNormalize <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-basal.avg <- t(apply(as.matrix(basal.avg), 1, unityNormalize))
-basal.avg <- basal.avg[,c('Mock','1dpi','2dpi','3dpi')]
-dim(basal.avg)
-#[1] 92  4
-
-#  basal.avg <- basal.avg[-c(3), ]
-# Prep & plot
-colors.inferno <- colorRamp2(breaks = c(seq(min(basal.avg),max(basal.avg),length.out=60)), inferno(n=60), space = "RGB")
-seuratcolors <- hue_pal()(4)
-
-basal.heatmap <- Heatmap(as.matrix(basal.avg),
-                        col= colors.inferno,
-                        top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill=seuratcolors))),
-                        column_split= factor(colnames(basal.avg), levels = identities),
-                        column_title = identities,
-                        column_title_gp = gpar(fontsize = 25),
-                        row_names_gp = gpar(fontsize = 18),
-                        column_title_rot = 90,
-                        cluster_rows=T,
-                        row_km = 4,
-                        cluster_columns=F,
-                        cluster_column_slices=F,
-                        show_column_names=FALSE,
-                        show_row_names = T,
-                        show_heatmap_legend = F)
-
-png('basal_timehm_3.png', width = 250, height = 1500)
-draw(basal.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
 dev.off()
 
 
@@ -3000,162 +2412,6 @@ draw(hbec.integrated.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
 dev.off()
 
 
-### Intermediate cells
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-intermediate <- subset(hbec.integrated,idents = 'Intermediate')
-load('./hbec.inter.marks2020-07-31.Robj')
-genes.use <- hbec.inter.marks %>% group_by(cluster) %>% top_n(40, avg_logFC)
-## Sam's marker list's
-# Get genes which have met our statistical thresholds (v1)
-# V2
-toMatch <- c('VEGF','PDGF','HBEGF','CSF','BMP','ANGPT','IL6','EGF','FGF','HGF','TNF','TGF',
-            'CSF','CCL2','IL8','IL6','RETN','VWF','SERPINE1','THBD','SELP','ANGPT2','C1Q','PLAU','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(intermediate), value=TRUE))
-matches.exclude <- matches[grep('R',matches)]
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# V3
-toMatch <- c('VEGF','PDGF','HBEGF','CYR','BMP','ANGPT','EGF','FGF','HGF','TGF','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(intermediate), value=TRUE))
-matches.exclude <- NULL
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# Yap downstream
-genes.use <- unique(c('YAP1','AREG','FGF1','CTGF',
-                    'SMAD7','AXIN2','SERPINE1','ITGB2','GLI1','BBC3',
-                    'AFP','ID1','ID2','NKD1','MYC','CCND1',
-                    'SOX2','SNAI2','BIRC2','BIRC5'))
-
-DefaultAssay(intermediate) <- 'RNA'
-Idents(intermediate) <- intermediate[['Condition']]
-intermediate$Condition <- factor(x=intermediate$Condition,
-                             levels = c('Mock','1dpi','2dpi','3dpi'))
-intermediate <- intermediate[order(intermediate$Condition),]
-identities <- c('Mock','1dpi','2dpi','3dpi')
-
-# prepare data
-intermediate <- ScaleData(intermediate,features = genes.use)  # $gene
-intermediate.avg <- AverageExpression(intermediate,assays = 'RNA',slot='scale.data')  # ,features=genes.use
-intermediate.avg <- t(scale(t(intermediate.avg$RNA)))
-unityNormalize <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-intermediate.avg <- t(apply(as.matrix(intermediate.avg), 1, unityNormalize))
-intermediate.avg <- intermediate.avg[,c('Mock','1dpi','2dpi','3dpi')]
-dim(intermediate.avg)
-#[1] 77  4
-
-#  intermediate.avg <- intermediate.avg[-c(3), ]
-# Prep & plot
-colors.inferno <- colorRamp2(breaks = c(seq(min(intermediate.avg),max(intermediate.avg),length.out=60)), inferno(n=60), space = "RGB")
-seuratcolors <- hue_pal()(4)
-
-intermediate.heatmap <- Heatmap(as.matrix(intermediate.avg),
-                        col= colors.inferno,
-                        top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill=seuratcolors))),
-                        column_split= factor(colnames(intermediate.avg), levels = identities),
-                        column_title = identities,
-                        column_title_gp = gpar(fontsize = 25),
-                        row_names_gp = gpar(fontsize = 18),
-                        column_title_rot = 90,
-                        cluster_rows=T,
-                        row_km = 4,
-                        cluster_columns=F,
-                        cluster_column_slices=F,
-                        show_column_names=FALSE,
-                        show_row_names = T,
-                        show_heatmap_legend = F)
-
-png('intermediate_timehm_3.png', width = 250, height = 1500)
-draw(intermediate.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
-dev.off()
-
-
-### Club cells
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-club <- subset(hbec.integrated,idents = 'Club')
-load('./hbec.club.marks2020-06-02.Robj')
-genes.use <- hbec.inter.marks %>% group_by(cluster) %>% top_n(40, avg_logFC)
-## Sam's marker list's
-# Get genes which have met our statistical thresholds (v1)
-# V2
-toMatch <- c('VEGF','PDGF','HBEGF','CSF','BMP','ANGPT','IL6','EGF','FGF','HGF','TNF','TGF',
-            'CSF','CCL2','IL8','IL6','RETN','VWF','SERPINE1','THBD','SELP','ANGPT2','C1Q','PLAU','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(club), value=TRUE))
-matches.exclude <- matches[grep('R',matches)]
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# V3
-toMatch <- c('VEGF','PDGF','HBEGF','CYR','BMP','ANGPT','EGF','FGF','HGF','TGF','DLL','REG')
-matches <- unique(grep(paste(toMatch,collapse="|"),
-                       rownames(club), value=TRUE))
-matches.exclude <- NULL
-matches.include <- matches[!(matches %in% matches.exclude)]
-matches.include <- matches.include[matches.include != 'IL6ST']
-matches.include <- sort(matches.include,decreasing = T)
-genes.use <- matches.include
-# Yap downstream
-genes.use <- unique(c('YAP1','AREG','FGF1','CTGF',
-                    'SMAD7','AXIN2','SERPINE1','ITGB2','GLI1','BBC3',
-                    'AFP','ID1','ID2','NKD1','MYC','CCND1',
-                    'SOX2','SNAI2','BIRC2','BIRC5'))
-
-DefaultAssay(club) <- 'RNA'
-Idents(club) <- club[['Condition']]
-club$Condition <- factor(x=club$Condition,
-                             levels = c('Mock','1dpi','2dpi','3dpi'))
-club <- club[order(club$Condition),]
-identities <- c('Mock','1dpi','2dpi','3dpi')
-
-# prepare data
-club <- ScaleData(club,features = genes.use)  # $gene
-club.avg <- AverageExpression(club,assays = 'RNA',slot='scale.data')  # ,features=genes.use
-club.avg <- t(scale(t(club.avg$RNA)))
-unityNormalize <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-club.avg <- t(apply(as.matrix(club.avg), 1, unityNormalize))
-club.avg <- club.avg[,c('Mock','1dpi','2dpi','3dpi')]
-dim(club.avg)
-# [1] 114   4
-
-#  club.avg <- club.avg[-c(3), ]
-# Prep & plot
-colors.inferno <- colorRamp2(breaks = c(seq(min(club.avg),max(club.avg),length.out=60)), inferno(n=60), space = "RGB")
-seuratcolors <- hue_pal()(4)
-
-club.heatmap <- Heatmap(as.matrix(club.avg),
-                        col= colors.inferno,
-                        top_annotation = HeatmapAnnotation(foo = anno_block(gp = gpar(fill=seuratcolors))),
-                        column_split= factor(colnames(club.avg), levels = identities),
-                        column_title = identities,
-                        column_title_gp = gpar(fontsize = 25),
-                        row_names_gp = gpar(fontsize = 18),
-                        column_title_rot = 90,
-                        cluster_rows=T,
-                        row_km = 4,
-                        cluster_columns=F,
-                        cluster_column_slices=F,
-                        show_column_names=FALSE,
-                        show_row_names = T,
-                        show_heatmap_legend = F)
-
-png('club_timehm_3.png', width = 250, height = 1700)
-draw(club.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
-dev.off()
-
-
-
-
 #### Pulling and observing specific gene sets
 Idents(hbec.integrated) <- hbec.integrated[['Condition']]
 hbec.integrated$Condition <- factor(hbec.integrated$Condition, levels=c('Mock','1dpi','2dpi','3dpi'))
@@ -3216,11 +2472,9 @@ dev.off()
 #sort( sapply(mget(ls()),object.size) )
 #sort( sapply(ls(),function(x){object.size(get(x))}))
 
-
 ### AddModuleScores
 hbec.integrated <- AddModuleScore(hbec.integrated,features=list(notch.genes),ctrl = 5,name='notch.score')
 hbec.integrated <- AddModuleScore(hbec.integrated,features=list(hippo.genes),ctrl = 5,name='hippo.score')
-
 
 
 #### Running on ciliated
@@ -3284,192 +2538,6 @@ p1 <- plot_grid(plotlist=myplots,ncol=6)
 png('ciliated_vln_hippo.png', width = 1333,height=1556)  # 1556, 1778
 p1
 dev.off()
-
-
-#### Running on basal
-load('./basal2020-06-26.Robj')
-Idents(basal) <- basal[['Condition']]
-basal$Condition <- factor(basal$Condition, levels=c('Mock','1dpi','2dpi','3dpi'))
-### AddModuleScores
-basal <- AddModuleScore(basal,features=list(notch.genes),ctrl = 5,name='notch.score')
-basal <- AddModuleScore(basal,features=list(hippo.genes),ctrl = 5,name='hippo.score')
-# manually remove Mock infected contaminates
-Idents(basal) <- basal[['scv2+']]
-infected <- subset(basal, idents = '1')
-Idents(infected) <- infected[['Condition']]  # no mock infected
-## KEGG Notch Pathway Gene List
-notch.genes <- c('ADAM17','APH1A','CIR1','CREBBP','CTBP1','CTBP2','DLL1','DLL3','DLL4','DTX1','DTX2','DTX3',
-                'DTX3L','DTX4','DVL1','DVL2','DVL3','EP300','HDAC1','HDAC2','HES1','HES5','JAG1','JAG2',
-                'KAT2A','KAT2B','LFNG','MAML1','MAML2','MAML3','MFNG','NCOR2','NCSTN','NOTCH1','NOTCH2',
-                'NOTCH3','NOTCH4','NUMB','NUMBL','PSEN1','PSEN2','PSENEN','PTCRA','RBPJ','RBPJL','RFNG','SNW1')
-notch.genes <- intersect(notch.genes,rownames(basal))
-notch.genes <- c(notch.genes,'notch.score1')
-
-hippo.genes <- c('AJUBA','AMOT','AMOTL1','AMOTL2','CASP3','DCHS1','DLG5','DVL2','FAT4','LATS1','LATS2',
-                'LIMD1','MARK3','MOB1A','MOB1B','MOB3B','NEK8','NF2','NPHP4','PJA2','SAV1','SOX11','STK3',
-                'STK4','TEAD1','TEAD2','TEAD3','TEAD4','TJP1','TJP2','WTIP','WWC1','WWC2','WWC3','WWTR1',
-                'YAP1','YWHAB','YWHAE')
-hippo.genes <- intersect(hippo.genes,rownames(basal))
-hippo.genes <- c(hippo.genes,'hippo.score1')
-
-basal <- ScaleData(basal,features = notch.genes)
-## ViolinPlot on bulk
-Idents(basal) <- basal[['Condition']]
-basal <- RenameIdents(basal,'Mock'='M','1dpi'='1','2dpi'='2','3dpi'='3')
-basal[['Condition2']] <- Idents(basal)
-Idents(basal) <- basal[['Condition2']]
-
-myplots <- vector('list', length(notch.genes))
-for (i in 1:length(notch.genes)) {
-    message(i)
-    gene <- notch.genes[i]
-    myplots[[i]] <- local({
-        i <- i
-        p1 <- VlnPlot(basal,gene,pt.size = 0,group.by='Condition2') + xlab('') + ylab('') + NoLegend() +
-            theme(axis.text.x=element_text(size=32, color = 'black',angle = 0,hjust = 0.5),
-            axis.text.y = element_text(size = 28, color = 'black'),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.line = element_line(color = "black"),
-            plot.title = element_text(size = 38, hjust = 0.5))
-    })
-}
-#,split.plot=T,split.by='scv2+'
-p1 <- plot_grid(plotlist=myplots,ncol=6)
-png('basal_vln_notch2.png', width = 1333,height=1778)  # 1556, 1778
-p1
-dev.off()
-
-
-
-#### Running on intermediate
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-intermediate <- subset(hbec.integrated,idents = 'Intermediate')
-Idents(intermediate) <- intermediate[['Condition']]
-intermediate$Condition <- factor(intermediate$Condition, levels=c('Mock','1dpi','2dpi','3dpi'))
-### AddModuleScores
-intermediate <- AddModuleScore(intermediate,features=list(notch.genes),ctrl = 5,name='notch.score')
-intermediate <- AddModuleScore(intermediate,features=list(hippo.genes),ctrl = 5,name='hippo.score')
-# manually remove Mock infected contaminates
-Idents(intermediate) <- intermediate[['scv2+']]
-infected <- subset(intermediate, idents = '1')
-Idents(infected) <- infected[['Condition']]  # no mock infected
-## KEGG Notch Pathway Gene List
-notch.genes <- c('ADAM17','APH1A','CIR1','CREBBP','CTBP1','CTBP2','DLL1','DLL3','DLL4','DTX1','DTX2','DTX3',
-                'DTX3L','DTX4','DVL1','DVL2','DVL3','EP300','HDAC1','HDAC2','HES1','HES5','JAG1','JAG2',
-                'KAT2A','KAT2B','LFNG','MAML1','MAML2','MAML3','MFNG','NCOR2','NCSTN','NOTCH1','NOTCH2',
-                'NOTCH3','NOTCH4','NUMB','NUMBL','PSEN1','PSEN2','PSENEN','PTCRA','RBPJ','RBPJL','RFNG','SNW1')
-notch.genes <- intersect(notch.genes,rownames(intermediate))
-notch.genes <- c(notch.genes,'notch.score1')
-
-hippo.genes <- c('AJUBA','AMOT','AMOTL1','AMOTL2','CASP3','DCHS1','DLG5','DVL2','FAT4','LATS1','LATS2',
-                'LIMD1','MARK3','MOB1A','MOB1B','MOB3B','NEK8','NF2','NPHP4','PJA2','SAV1','SOX11','STK3',
-                'STK4','TEAD1','TEAD2','TEAD3','TEAD4','TJP1','TJP2','WTIP','WWC1','WWC2','WWC3','WWTR1',
-                'YAP1','YWHAB','YWHAE')
-hippo.genes <- intersect(hippo.genes,rownames(intermediate))
-hippo.genes <- c(hippo.genes,'hippo.score1')
-
-intermediate <- ScaleData(intermediate,features = hippo.genes)
-## ViolinPlot on bulk
-Idents(intermediate) <- intermediate[['Condition']]
-intermediate <- RenameIdents(intermediate,'Mock'='M','1dpi'='1','2dpi'='2','3dpi'='3')
-intermediate[['Condition2']] <- Idents(intermediate)
-Idents(intermediate) <- intermediate[['Condition2']]
-
-myplots <- vector('list', length(hippo.genes))
-for (i in 1:length(hippo.genes)) {
-    message(i)
-    gene <- hippo.genes[i]
-    myplots[[i]] <- local({
-        i <- i
-        p1 <- VlnPlot(intermediate,gene,pt.size = 0,group.by='Condition2') + xlab('') + ylab('') + NoLegend() +
-            theme(axis.text.x=element_text(size=32, color = 'black',angle = 0,hjust = 0.5),
-            axis.text.y = element_text(size = 28, color = 'black'),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.line = element_line(color = "black"),
-            plot.title = element_text(size = 38, hjust = 0.5))
-    })
-}
-# ,split.plot=T,split.by='scv2+'
-p1 <- plot_grid(plotlist=myplots,ncol=6)
-png('intermediate_vln_hippo2.png', width = 1333,height=1556)  # 1556, 1778
-p1
-dev.off()
-
-
-#### Running on club
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-club <- subset(hbec.integrated,idents = 'Club')
-Idents(club) <- club[['Condition']]
-club$Condition <- factor(club$Condition, levels=c('Mock','1dpi','2dpi','3dpi'))
-### AddModuleScores
-club <- AddModuleScore(club,features=list(notch.genes),ctrl = 5,name='notch.score')
-club <- AddModuleScore(club,features=list(hippo.genes),ctrl = 5,name='hippo.score')
-# manually remove Mock infected contaminates
-Idents(club) <- club[['scv2+']]
-infected <- subset(club, idents = '1')
-Idents(infected) <- infected[['Condition']]  # no mock infected
-## KEGG Notch Pathway Gene List
-notch.genes <- c('ADAM17','APH1A','CIR1','CREBBP','CTBP1','CTBP2','DLL1','DLL3','DLL4','DTX1','DTX2','DTX3',
-                'DTX3L','DTX4','DVL1','DVL2','DVL3','EP300','HDAC1','HDAC2','HES1','HES5','JAG1','JAG2',
-                'KAT2A','KAT2B','LFNG','MAML1','MAML2','MAML3','MFNG','NCOR2','NCSTN','NOTCH1','NOTCH2',
-                'NOTCH3','NOTCH4','NUMB','NUMBL','PSEN1','PSEN2','PSENEN','PTCRA','RBPJ','RBPJL','RFNG','SNW1')
-notch.genes <- intersect(notch.genes,rownames(club))
-notch.genes <- c(notch.genes,'notch.score1')
-
-hippo.genes <- c('AJUBA','AMOT','AMOTL1','AMOTL2','CASP3','DCHS1','DLG5','DVL2','FAT4','LATS1','LATS2',
-                'LIMD1','MARK3','MOB1A','MOB1B','MOB3B','NEK8','NF2','NPHP4','PJA2','SAV1','SOX11','STK3',
-                'STK4','TEAD1','TEAD2','TEAD3','TEAD4','TJP1','TJP2','WTIP','WWC1','WWC2','WWC3','WWTR1',
-                'YAP1','YWHAB','YWHAE')
-hippo.genes <- intersect(hippo.genes,rownames(club))
-hippo.genes <- c(hippo.genes,'hippo.score1')
-
-club <- ScaleData(club,features = notch.genes)
-## ViolinPlot on bulk
-Idents(club) <- club[['Condition']]
-club <- RenameIdents(club,'Mock'='M','1dpi'='1','2dpi'='2','3dpi'='3')
-club[['Condition2']] <- Idents(club)
-Idents(club) <- club[['Condition2']]
-
-myplots <- vector('list', length(notch.genes))
-for (i in 1:length(notch.genes)) {
-    message(i)
-    gene <- notch.genes[i]
-    myplots[[i]] <- local({
-        i <- i
-        p1 <- VlnPlot(club,gene,pt.size = 0,group.by='Condition2') + xlab('') + ylab('') + NoLegend() +
-            theme(axis.text.x=element_text(size=32, color = 'black',angle = 0,hjust = 0.5),
-            axis.text.y = element_text(size = 28, color = 'black'),
-            panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            panel.background = element_blank(),
-            axis.title.x = element_blank(),
-            axis.title.y = element_blank(),
-            axis.line = element_line(color = "black"),
-            plot.title = element_text(size = 38, hjust = 0.5))
-    })
-}
-#,split.plot=T,split.by='scv2+'
-p1 <- plot_grid(plotlist=myplots,ncol=6)
-png('club_vln_notch2.png', width = 1333,height=1778)  # 1556, 1778
-p1
-dev.off()
-
-
-
-
-
-
-
-
-
 
 
 ## ggplot2 violin plot on bulk
@@ -3563,9 +2631,8 @@ draw(hbec.integrated.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
 dev.off()
 
 
-
 #### Making statistically significant plots - TIGHT LOOP SETUP
-# load Sam's code 'HBECStatSig.R' to get function HBECStatSig
+# load 'HBECStatSig.R' to get function HBECStatSig
 # load all objects & remove mock infected cells from hbec.integrated and ciliated
 #Idents(hbec.integrated) <- hbec.integrated[['scv2+']]
 #infected <- subset(hbec.integrated, idents = '1')
@@ -3578,17 +2645,7 @@ load('./ciliated2020-10-09.Robj')
 #Idents(infected) <- infected[['Condition']]
 #mockinfected <- subset(infected, idents = 'Mock')
 #ciliated <- subset(ciliated, cells = Cells(mockinfected),invert = T)
-load('./basal2020-06-26.Robj')
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-intermediate <- subset(hbec.integrated,idents = 'Intermediate')
-Idents(hbec.integrated) <- hbec.integrated[['cell_type2']]
-club <- subset(hbec.integrated,idents = 'Club')
 
-# Order data & rename short conditions
-#Idents(basal) <- basal[['Condition']]
-#basal$Condition <- factor(basal$Condition, levels=c('Mock','1dpi','2dpi','3dpi'))
-#basal <- RenameIdents(basal,'Mock'='M','1dpi'='1','2dpi'='2','3dpi'='3')
-#basal[['Condition2']] <- Idents(basal)
 Idents(hbec.integrated) <- hbec.integrated[['Condition2']]
 # First pass gene sets
 notch.genes <- c('ADAM17','APH1A','CIR1','CREBBP','CTBP1','CTBP2','DLL1','DLL3','DLL4','DTX1','DTX2','DTX3',
@@ -3629,7 +2686,7 @@ goi.genes <- c('WNT5A','WNT4','TGFB3','TGFB1','BMP3','BMP4','ID2','ID3','BMPR1A'
                 'AREG','EREG','VEGFA','ERBB2','HBEGF')
 met.genes <- c('TGFBR2','EGR1','HK2','LDHA','PGK1','PRDX5','GSTA1','ATP5ME','NFE2L2')
 genes.use <- c('NFE2L2','GSTA1','GSTP1','ACE2')
-# Sam's function to filter genes
+# Filter genes by significance
 notch.use <- HBECStatSig(hbec.integrated,notch.genes,min.pct = 0.1,logfc.threshold = 0)
 sig.notch.genes <- sort(unique(notch.use$gene))
 hippo.use <- HBECStatSig(hbec.integrated,hippo.genes,min.pct = 0.1,logfc.threshold = 0)
@@ -3702,8 +2759,6 @@ hbec.integrated.heatmap <- Heatmap(as.matrix(hbec.integrated.avg),
 png('hbec.integrated_hm_conn.png', width = 250, height = 850)  # was 1600
 draw(hbec.integrated.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
 dev.off()
-
-
 
 
 #### Do IFIT genes correlate with infection?
@@ -3790,7 +2845,6 @@ Idents(hbecmono) <- hbecmono[['cell_type2']]
 hbecmono[['cell_type2']] <- Idents(hbecmono)
 
 
-
 to_be_tested <- row.names(subset(fData(hbecmono),
     gene_short_name %in% c("KRT5", "LYPD2", "DNAH6")))
 cds_subset <- hbecmono[to_be_tested,]
@@ -3800,7 +2854,6 @@ diff_test_res[,c("gene_short_name", "pval", "qval")]
 png('hbecmono_genes_2.png', width = 800,height=1200)
 plot_genes_in_pseudotime(cds_subset, color_by = "cell_type2")
 dev.off()
-
 
 
 #### Monocle3
@@ -3931,7 +2984,6 @@ FeaturePlot(bigcil,'pseudotime_cil',cols=viridis(60),label=F,split.by='Condition
             theme(legend.text = element_text(size = 22),
             legend.key.size = unit(1.5, "lines"))
 dev.off()
-
 
 
 ## Create new monocle object from ciliated subset
@@ -4075,9 +3127,6 @@ plot_genes_in_pseudotime(ciliated_cds,
 dev.off()
 
 
-
-
-
 ######
 load('./ciliamono2020-08-10.Robj')
 load('./hbecmono2020-08-10.Robj')
@@ -4103,17 +3152,12 @@ plot_genes_in_pseudotime(ciliamono_cds,
 dev.off()
 
 
-
-
-
-
 ### Probing genes of interest
 # General Prep
 Idents(hbec.integrated) <- hbec.integrated[['Condition2']]
 Idents(hbec.integrated) <- factor(x=Idents(hbec.integrated), levels = rev(c('M','1','2','3')))
 group_colors <- colorRampPalette(RColorBrewer::brewer.pal(n=9, name='Blues'))(2)
 
-# all-ish
 genes <- c('WNT5A','WNT4','TGFB3','EGR1','TGFBR2','BMP3','BMP4','BMPR1A','BMPR1B','BMPR2','RGMB',
             'FGF14','IGFBP1','IGFBP2','IGFBP3','IGFBP4','IGFBP5','IGFBP6','IGFBP7','IGF','AREG',
             'EGF','VEGFA','RBB2','FGF1','JAG1','JAG2','YAP1')
@@ -4228,7 +3272,6 @@ png('ciliated_vln_ifn2.png', width = 800,height=700)
 VlnPlot(ciliated,gene,pt.size = 0)
 dev.off()
 
-
 ciliated <- RenameIdents(ciliated, 'Mature_Ciliated1' = 'MC1',
                                     'Ciliated_Progenitor' = 'CP',
                                     'Mature_Ciliated2' = 'MC2',
@@ -4244,7 +3287,6 @@ p1 <- VlnPlot(ciliated,'ifn.score1',pt.size = 0, cols = cilcolors) + labs(title 
 png('ciliated_vln_ifn3.png', width = 400,height=500)
 p1
 dev.off()
-
 
 Idents(ciliated) <- ciliated[['Condition']]
 Idents(ciliated) <- factor(x=Idents(ciliated),levels=c('Mock','1dpi','2dpi','3dpi'))
@@ -4346,7 +3388,7 @@ ciliated.ciliated3 <- as.matrix(ciliated.ciliated3[order(ciliated$pseudotime),])
 ciliated.inf <- as.matrix(ciliated$'scv2+')
 ciliated.inf <- as.matrix(ciliated.inf[order(ciliated$pseudotime),])
 
-n = ncol(ciliated.avg)  # running with this rather than 60 takes ages, good for final, not for iteration
+n = ncol(ciliated.avg)
 colors.inferno <- colorRamp2(breaks = c(seq(min(ciliated.avg),max(ciliated.avg),length.out=60)), inferno(n=60), space = "RGB")
 n = nrow(ciliated.pseudo)
 colors.viridis <- colorRamp2(breaks = c(seq(min(ciliated.pseudo),max(ciliated.pseudo),length.out=n)), viridis(n=n), space = "RGB")
@@ -4376,9 +3418,6 @@ draw(ciliated.heatmap,padding = unit(c(2, 2, 2, 2), "mm"))
 dev.off()
 
 
-
-
-
 #### Measuring genes in infected cells
 Idents(hbec.integrated) <- hbec.integrated[['Condition']]
 png('hbec.integrated_vln_ifnb1.png', width = 400,height=400)
@@ -4406,7 +3445,4 @@ VlnPlot(hbec.integrated,c('IL6'),pt.size = 0.2,split.plot=T,split.by='scv2+') + 
     axis.line = element_line(color = "black"),
     plot.title = element_text(size = 38, hjust = 0.5))
 dev.off()
-
-
-
 
